@@ -6,18 +6,22 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import com.hembitski.clockfromwidgets.data.Angles;
+import com.hembitski.clockfromwidgets.data.Numbers;
 
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class ClockItemView extends View {
+    private static final int DEGREE_MAX = 360;
+    private static final int DEGREE_MIN = 0;
     private static final float THICKNESS_FACTOR = 0.05f;
     private static final float RADIUS_LENGTH_RATIO = 0.8f;
-    private static final int WIDTH_IN_WIDGETS = 18;
+    private static final int WIDTH_IN_WIDGETS = 28;
     private static final int HEIGHT_IN_WIDGETS = 6;
 
     private float cx;
@@ -34,10 +38,11 @@ public class ClockItemView extends View {
 
     private Item[][] items;
     private Angles[][] angles;
+    private Angles[][] templateAngles;
 
     private boolean isMoving;
     private Timer timer;
-    private Runnable invalidateRunnable = () -> invalidate();
+    private Runnable invalidateRunnable = this::invalidate;
 
     public ClockItemView(Context context) {
         super(context);
@@ -51,24 +56,23 @@ public class ClockItemView extends View {
         super(context, attrs, defStyleAttr);
     }
 
-    public void setArrayNumber(Angles[][] angles) {
-        for (int i = 0; i < angles.length; i++) {
-            for (int j = 0; j < angles[0].length; j++) {
-                this.angles[i][j].angle1 = angles[i][j].angle1;
-                this.angles[i][j].angle2 = angles[i][j].angle2;
+    public void setTime(String time) {
+        if (time.length() <= 8) {
+            char separator = ':';
+            int[] numbersForShow = new int[8];
+            for (int i = 0; i < time.length(); i++) {
+                char c = time.charAt(i);
+                if (c == separator) {
+                    numbersForShow[i] = -1;
+                } else {
+                    numbersForShow[i] = Integer.valueOf(String.valueOf(c));
+                }
             }
-        }
-        updateData();
-        invalidate();
-    }
-
-    public void moveArrowsOnOff() {
-        if (isMoving) {
-            stopMoving();
-        } else {
+            templateAngles = createTimeArray(numbersForShow);
+            isMoving = true;
             startMoving();
+//            setArrayNumber(createTimeArray(numbersForShow));
         }
-        isMoving = !isMoving;
     }
 
     @Override
@@ -89,14 +93,27 @@ public class ClockItemView extends View {
         }
     }
 
+    private void setArrayNumber(Angles[][] angles) {
+        for (int i = 0; i < angles.length; i++) {
+            for (int j = 0; j < angles[0].length; j++) {
+                this.angles[i][j].angle1 = angles[i][j].angle1;
+                this.angles[i][j].angle2 = angles[i][j].angle2;
+            }
+        }
+        updateData();
+        invalidate();
+    }
+
     private void startMoving() {
         timer = new Timer();
         timer.schedule(getTimerTask(), 0, 10);
     }
 
     private void stopMoving() {
-        timer.cancel();
-        timer = null;
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
     private TimerTask getTimerTask() {
@@ -131,13 +148,29 @@ public class ClockItemView extends View {
     }
 
     private void updateData() {
-        for (int i = 0; i < WIDTH_IN_WIDGETS; i++) {
-            for (int j = 0; j < HEIGHT_IN_WIDGETS; j++) {
-                angles[i][j].angle1 += 2;
-                angles[i][j].angle2 -= 4;
-                calculateArrowsCoordinates(angles[i][j].angle1, angles[i][j].angle2);
-                setDataToItem(items[i][j], i, j, cx, cy, line1X, line1Y, line2X, line2Y);
+        if (isMoving) {
+            isMoving = false;
+            for (int i = 0; i < WIDTH_IN_WIDGETS; i++) {
+                for (int j = 0; j < HEIGHT_IN_WIDGETS; j++) {
+                    boolean needRecalculate = false;
+                    validateAngles(angles[i][j]);
+                    if (angles[i][j].angle1 != templateAngles[i][j].angle1) {
+                        angles[i][j].angle1 += 1;
+                        needRecalculate = true;
+                    }
+                    if (angles[i][j].angle2 != templateAngles[i][j].angle2) {
+                        angles[i][j].angle2 -= 1;
+                        needRecalculate = true;
+                    }
+                    if (needRecalculate) {
+                        calculateArrowsCoordinates(angles[i][j].angle1, angles[i][j].angle2);
+                        setDataToItem(items[i][j], i, j, cx, cy, line1X, line1Y, line2X, line2Y);
+                        isMoving = true;
+                    }
+                }
             }
+        } else {
+            stopMoving();
         }
     }
 
@@ -170,6 +203,46 @@ public class ClockItemView extends View {
                 angles[i][j].angle1 = rnd.nextInt(360);
                 angles[i][j].angle2 = rnd.nextInt(360);
             }
+        }
+    }
+
+    private Angles[][] createTimeArray(int[] numbersForShow) {
+        int[] shift = {0, 4, 8, 10, 14, 18, 20, 24};
+        Angles[][] angles = new Angles[WIDTH_IN_WIDGETS][HEIGHT_IN_WIDGETS];
+        for (int i = 0; i < angles.length; i++) {
+            for (int j = 0; j < angles[0].length; j++) {
+                angles[i][j] = new Angles();
+            }
+        }
+        Numbers numbers = new Numbers();
+        for (int i = 0; i < numbersForShow.length; i++) {
+            Angles[][] part = numbers.getAngles(numbersForShow[i]);
+            fillPartOfArray(angles, part, shift[i]);
+        }
+        return angles;
+    }
+
+    private void fillPartOfArray(Angles[][] array, Angles[][] part, int shift) {
+        for (int i = 0; i < part.length; i++) {
+            for (int j = 0; j < part[0].length; j++) {
+                array[i + shift][j].angle1 = part[i][j].angle1;
+                array[i + shift][j].angle2 = part[i][j].angle2;
+            }
+        }
+    }
+
+    private void validateAngles(Angles angles) {
+        if(angles.angle1 > DEGREE_MAX) {
+            angles.angle1 = DEGREE_MIN;
+        }
+        if(angles.angle1 < DEGREE_MIN) {
+            angles.angle1 = DEGREE_MAX;
+        }
+        if(angles.angle2 > DEGREE_MAX) {
+            angles.angle2 = DEGREE_MIN;
+        }
+        if(angles.angle2 < DEGREE_MIN) {
+            angles.angle2 = DEGREE_MAX;
         }
     }
 

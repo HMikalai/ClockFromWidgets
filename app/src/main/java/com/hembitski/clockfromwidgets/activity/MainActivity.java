@@ -2,24 +2,50 @@ package com.hembitski.clockfromwidgets.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Button;
 
 import com.hembitski.clockfromwidgets.R;
 import com.hembitski.clockfromwidgets.view.ClockItemView;
 
-public class MainActivity extends AppCompatActivity{
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
+public class MainActivity extends AppCompatActivity {
+
+    private ClockItemView clockItemView;
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ClockItemView clockItemView = findViewById(R.id.clockItem);
-        Button button = findViewById(R.id.button);
-        button.setOnClickListener(v -> clockItemView.moveArrowsOnOff());
-//        button.setOnClickListener(v -> clockItemView.setArrayNumber(new Numbers().getNumber1()));
+        clockItemView = findViewById(R.id.clockItem);
 
+        timer = new Timer();
+        timer.schedule(getTimerTask(), 3000, 5_000);
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        timer.cancel();
+        timer = null;
+    }
+
+    private TimerTask getTimerTask() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                clockItemView.setTime(getTimeString());
+            }
+        };
+    }
+
+    private String getTimeString() {
+        long date = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("KK:mm:ss", Locale.getDefault());
+        return sdf.format(date);
+    }
 }
