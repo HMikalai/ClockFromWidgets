@@ -24,14 +24,16 @@ public class MainActivity extends AppCompatActivity {
         clockItemView = findViewById(R.id.clockItem);
 
         timer = new Timer();
-        timer.schedule(getTimerTask(), 3000, 5_000);
+        timer.schedule(getTimerTask(), 3000, 1_000);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        timer.cancel();
-        timer = null;
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
     private TimerTask getTimerTask() {

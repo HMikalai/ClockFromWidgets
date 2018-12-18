@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import com.hembitski.clockfromwidgets.data.Angles;
@@ -23,6 +22,10 @@ public class ClockItemView extends View {
     private static final float RADIUS_LENGTH_RATIO = 0.8f;
     private static final int WIDTH_IN_WIDGETS = 28;
     private static final int HEIGHT_IN_WIDGETS = 6;
+    private static final int TIMER_ANIMATION_DELAY = 0;
+    private static final int TIMER_ANIMATION_PERIOD = 1;
+    private static final int TIME_STRING_LENGHT = 8;
+    private static final int SEPARATOR_INDEX = -1;
 
     private float cx;
     private float cy;
@@ -57,21 +60,21 @@ public class ClockItemView extends View {
     }
 
     public void setTime(String time) {
-        if (time.length() <= 8) {
+        if (time.length() <= TIME_STRING_LENGHT) {
             char separator = ':';
-            int[] numbersForShow = new int[8];
+            int[] numbersForShow = new int[TIME_STRING_LENGHT];
             for (int i = 0; i < time.length(); i++) {
                 char c = time.charAt(i);
                 if (c == separator) {
-                    numbersForShow[i] = -1;
+                    numbersForShow[i] = SEPARATOR_INDEX;
                 } else {
                     numbersForShow[i] = Integer.valueOf(String.valueOf(c));
                 }
             }
             templateAngles = createTimeArray(numbersForShow);
             isMoving = true;
+            makeArrowsShift();
             startMoving();
-//            setArrayNumber(createTimeArray(numbersForShow));
         }
     }
 
@@ -93,20 +96,9 @@ public class ClockItemView extends View {
         }
     }
 
-    private void setArrayNumber(Angles[][] angles) {
-        for (int i = 0; i < angles.length; i++) {
-            for (int j = 0; j < angles[0].length; j++) {
-                this.angles[i][j].angle1 = angles[i][j].angle1;
-                this.angles[i][j].angle2 = angles[i][j].angle2;
-            }
-        }
-        updateData();
-        invalidate();
-    }
-
     private void startMoving() {
         timer = new Timer();
-        timer.schedule(getTimerTask(), 0, 10);
+        timer.schedule(getTimerTask(), TIMER_ANIMATION_DELAY, TIMER_ANIMATION_PERIOD);
     }
 
     private void stopMoving() {
@@ -232,16 +224,16 @@ public class ClockItemView extends View {
     }
 
     private void validateAngles(Angles angles) {
-        if(angles.angle1 > DEGREE_MAX) {
+        if (angles.angle1 > DEGREE_MAX) {
             angles.angle1 = DEGREE_MIN;
         }
-        if(angles.angle1 < DEGREE_MIN) {
+        if (angles.angle1 < DEGREE_MIN) {
             angles.angle1 = DEGREE_MAX;
         }
-        if(angles.angle2 > DEGREE_MAX) {
+        if (angles.angle2 > DEGREE_MAX) {
             angles.angle2 = DEGREE_MIN;
         }
-        if(angles.angle2 < DEGREE_MIN) {
+        if (angles.angle2 < DEGREE_MIN) {
             angles.angle2 = DEGREE_MAX;
         }
     }
@@ -254,6 +246,15 @@ public class ClockItemView extends View {
         item.line1Y = line1Y + indexY * size;
         item.line2X = line2X + indexX * size;
         item.line2Y = line2Y + indexY * size;
+    }
+
+    private void makeArrowsShift() {
+        for (int i = 0; i < WIDTH_IN_WIDGETS; i++) {
+            for (int j = 0; j < HEIGHT_IN_WIDGETS; j++) {
+                angles[i][j].angle1 += 1;
+                angles[i][j].angle2 -= 1;
+            }
+        }
     }
 
     private class Item {
