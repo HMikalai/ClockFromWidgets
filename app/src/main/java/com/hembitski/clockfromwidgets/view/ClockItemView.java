@@ -11,20 +11,24 @@ import android.view.View;
 import com.hembitski.clockfromwidgets.data.Angles;
 import com.hembitski.clockfromwidgets.data.Numbers;
 
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class ClockItemView extends View {
     private static final int DEGREE_MAX = 360;
     private static final int DEGREE_MIN = 0;
+
     private static final float THICKNESS_FACTOR = 0.05f;
     private static final float RADIUS_LENGTH_RATIO = 0.8f;
+
     private static final int WIDTH_IN_WIDGETS = 28;
     private static final int HEIGHT_IN_WIDGETS = 6;
+
     private static final int TIMER_ANIMATION_DELAY = 0;
     private static final int TIMER_ANIMATION_PERIOD = 1;
+
     private static final int TIME_STRING_LENGHT = 8;
+
     private static final int SEPARATOR_INDEX = -1;
 
     private float cx;
@@ -43,6 +47,8 @@ public class ClockItemView extends View {
     private Angles[][] angles;
     private Angles[][] templateAngles;
 
+    private boolean isInitializationDone;
+
     private boolean isMoving;
     private Timer timer;
     private Runnable invalidateRunnable = this::invalidate;
@@ -60,7 +66,7 @@ public class ClockItemView extends View {
     }
 
     public void setTime(String time) {
-        if (time.length() <= TIME_STRING_LENGHT) {
+        if (isInitializationDone && time.length() <= TIME_STRING_LENGHT) {
             char separator = ':';
             int[] numbersForShow = new int[TIME_STRING_LENGHT];
             for (int i = 0; i < time.length(); i++) {
@@ -119,7 +125,7 @@ public class ClockItemView extends View {
     }
 
     private void init(int width, int height) {
-        initItemsArray();
+        initArrays();
 
         size = Math.min(width / WIDTH_IN_WIDGETS, height / HEIGHT_IN_WIDGETS);
         cx = size / 2;
@@ -137,6 +143,7 @@ public class ClockItemView extends View {
         paintCircle.setStyle(Paint.Style.STROKE);
 
         updateData();
+        isInitializationDone = true;
     }
 
     private void updateData() {
@@ -181,19 +188,14 @@ public class ClockItemView extends View {
         line2Y = (int) (size / 2 + rx * s2 + ry * c2);
     }
 
-    private void initItemsArray() {
-        Random rnd = new Random();
-
+    private void initArrays() {
         items = new Item[WIDTH_IN_WIDGETS][HEIGHT_IN_WIDGETS];
         angles = new Angles[WIDTH_IN_WIDGETS][HEIGHT_IN_WIDGETS];
 
         for (int i = 0; i < WIDTH_IN_WIDGETS; i++) {
             for (int j = 0; j < HEIGHT_IN_WIDGETS; j++) {
                 items[i][j] = new Item();
-
                 angles[i][j] = new Angles();
-                angles[i][j].angle1 = rnd.nextInt(360);
-                angles[i][j].angle2 = rnd.nextInt(360);
             }
         }
     }

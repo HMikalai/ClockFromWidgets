@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         clockItemView = findViewById(R.id.clockItem);
 
         timer = new Timer();
-        timer.schedule(getTimerTask(), 3000, 1_000);
+        timer.schedule(getTimerTask(), 0, 1_000);
     }
 
     @Override
@@ -47,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
     private String getTimeString() {
         long date = System.currentTimeMillis();
-        SimpleDateFormat sdf = new SimpleDateFormat("KK:mm:ss", Locale.getDefault());
+//        SimpleDateFormat sdf = new SimpleDateFormat("KK:mm:ss", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("kk:mm:ss", Locale.getDefault());
         return sdf.format(date);
     }
 }
